@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Artwork Classification</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        /* 背景动画 */
+        @keyframes slide {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body {
+            background: linear-gradient(270deg, #e9d362, #333333);
+            background-size: 400% 400%;
+            animation: slide 15s ease infinite;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h1>Upload Your Artwork for AI Classification</h1>
+
+    <form id="uploadForm" enctype="multipart/form-data" method="POST" action="{% url 'upload_artwork' %}">
+        {% csrf_token %}
+        <input type="file" name="image" id="imageInput" accept="image/*" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    <div id="result" class="result"></div>
+</div>
+
+<script>
+    const uploadForm = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+
+    uploadForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(uploadForm);
+
+        fetch("{% url 'upload_artwork' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result) {
+                    resultDiv.innerHTML = `Prediction: <strong>${data.result}</strong>`;
+                } else if (data.error) {
+                    resultDiv.innerHTML = `Error: ${data.error}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = 'An error occurred while processing the image.';
+            });
+    });
+</script>
+</body>
+</html>

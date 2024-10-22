@@ -1,0 +1,102 @@
+<relevant_code>
+
+
+
+<file file_path=/ai_art_recognize/models.py>
+from django.db import models
+
+
+# 定义用于保存用户上传图片的数据库模型：
+# Create your models here.
+
+
+class ArtWork(models.Model):
+    image = models.ImageField(upload_to='artworks/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    prediction = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f'Artwork uploaded at {self.uploaded_at}'
+
+</file>
+
+
+
+<file file_path=/ai_art_recognize/templates/upload.html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Artwork Classification</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h1 { color: #333; }
+        form { margin-bottom: 20px; }
+        .result { margin-top: 20px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+<h1>Upload Your Artwork for AI Classification</h1>
+
+<form id="uploadForm" enctype="multipart/form-data" method="POST" action="{% url 'upload_artwork' %}">
+    {% csrf_token %}
+    <input type="file" name="image" id="imageInput" accept="image/*" required>
+    <button type="submit">Upload</button>
+</form>
+
+<div id="result" class="result"></div>
+
+<script>
+    const uploadForm = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+
+    uploadForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(uploadForm);
+
+        fetch("{% url 'upload_artwork' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result) {
+                    resultDiv.innerHTML = `Prediction: <strong>${data.result}</strong>`;
+                } else if (data.error) {
+                    resultDiv.innerHTML = `Error: ${data.error}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = 'An error occurred while processing the image.';
+            });
+    });
+</script>
+</body>
+</html>
+
+</file>
+
+
+
+<file file_path=/ai_art_recognize/forms.py>
+# 创建表单类：
+from django import forms
+from .models import ArtWork
+
+
+class ArtWorkForm(forms.ModelForm):
+    class Meta:
+        model = ArtWork
+        fields = ['image']
+
+</file>
+
+
+
+</relevant_code>
